@@ -1,10 +1,32 @@
 use serde::{Deserialize,Serialize};
-// use reqwest::blocking::get;
 
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>>  {
+    use std::env;
+    use dotenv::dotenv;
+    dotenv().ok();
+    let db_url = env::var("DATABASE_URL").expect("wrong db url");
 
-fn main() {
-    println!("Hello, world!");
+    let res = reqwest::get("https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2022.json").await?;
+    let data = res.json::<Root>().await?;
+    let days = data.days;
+    for day in days {
+        println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off_day);
+    }
+
+    use sqlx::postgres::PgPoolOptions;
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&db_url).await?;
+
+    let days:Vec<DBDay> = sqlx::query_as!(DBDay, "select date, name, is_off from holiday where date like $1", "2022-10%").fetch_all(&pool).await?;
+    println!("data from db: {:?}", days);
+
+    Ok(())
 }
+
+#[derive(Default, Debug, Clone, PartialEq)]
+struct DBDay { date: String, name: String, is_off: bool }
 
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
