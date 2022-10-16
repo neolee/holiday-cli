@@ -5,13 +5,19 @@ fn make_data_url(prefix: &str, year: i32) -> String {
     String::from(prefix) + &(format!("{}.json", year))
 }
 
-pub async fn test_reqwest_serde(prefix: &str) -> Result<(), reqwest::Error> {
-    let year = 2022;
+async fn get_holidays_by_year(prefix: &str, year: i32) -> Result<Vec<Day>, reqwest::Error> {
     let days = reqwest::get(make_data_url(prefix, year))
         .await?
         .json::<Root>()
         .await?
         .days;
+
+    Ok(days)
+}
+
+pub async fn test_reqwest_serde(prefix: &str) -> Result<(), reqwest::Error> {
+    let year = 2020;
+    let days = get_holidays_by_year(prefix, year).await?;
 
     for day in days {
         println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off_day);
