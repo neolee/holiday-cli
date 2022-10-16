@@ -4,11 +4,11 @@ use sqlx::postgres::PgPool;
 pub async fn check_table_exist(pool: &PgPool, table_name: &str) -> Result<bool, sqlx::Error> {
     let res = sqlx::query!("
 SELECT EXISTS (
-    SELECT FROM
-        pg_tables
+    SELECT * FROM
+        information_schema.tables
     WHERE
-        schemaname = 'public' AND
-        tablename  = $1
+        table_type LIKE 'BASE TABLE' AND
+        table_name = $1
     )
 ", table_name).fetch_one(pool).await?;
 
