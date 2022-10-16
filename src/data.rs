@@ -1,12 +1,12 @@
 use serde::{Deserialize,Serialize};
 
 
-fn make_data_url(prefix: &str, year: i32) -> String {
-    String::from(prefix) + &(format!("{}.json", year))
+fn make_data_url(url_prefix: &str, year: i32) -> String {
+    String::from(url_prefix) + &(format!("{}.json", year))
 }
 
-async fn get_holidays_by_year(prefix: &str, year: i32) -> Result<Vec<Day>, reqwest::Error> {
-    let days = reqwest::get(make_data_url(prefix, year))
+pub async fn get_holidays_of_year(url_prefix: &str, year: i32) -> Result<Vec<Day>, reqwest::Error> {
+    let days = reqwest::get(make_data_url(url_prefix, year))
         .await?
         .json::<Root>()
         .await?
@@ -15,9 +15,9 @@ async fn get_holidays_by_year(prefix: &str, year: i32) -> Result<Vec<Day>, reqwe
     Ok(days)
 }
 
-pub async fn test_reqwest_serde(prefix: &str) -> Result<(), reqwest::Error> {
+pub async fn test_reqwest_serde(url_prefix: &str) -> Result<(), reqwest::Error> {
     let year = 2020;
-    let days = get_holidays_by_year(prefix, year).await?;
+    let days = get_holidays_of_year(url_prefix, year).await?;
 
     for day in days {
         println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off_day);

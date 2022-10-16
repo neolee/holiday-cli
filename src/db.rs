@@ -1,4 +1,3 @@
-use sqlx::postgres::PgPoolOptions;
 use sqlx::postgres::PgPool;
 
 
@@ -16,14 +15,14 @@ SELECT EXISTS (
     Ok(res.exists.unwrap())
 }
 
-async fn drop_table (pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
+async fn drop_table(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
     let sql = "DROP TABLE IF EXISTS ".to_owned() + table_name;
     sqlx::query(&sql).execute(pool).await?;
 
     Ok(())
 }
 
-async fn create_schema (pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
+async fn create_schema(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
     let sql_create_table = format!("
 CREATE TABLE IF NOT EXISTS {0}
 (
@@ -40,7 +39,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS {0}_ux_date ON {0} (date)
 
     let mut tx = pool.begin().await?;
     sqlx::query(&sql_create_table)
-    .execute(&mut tx)
+    .execute(insert_row&mut tx)
     .await?;
     sqlx::query(&sql_create_index)
     .execute(&mut tx)
@@ -51,22 +50,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS {0}_ux_date ON {0} (date)
 }
 
 
-pub async fn test_sqlx(db_url: &str) -> Result<(), sqlx::Error> {
-    let pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&db_url).await?;
-
+pub async fn test_sqlx(pool: &PgPool) -> Result<(), sqlx::Error> {
     let table_name = "holiday";
     if check_table_exist(&pool, table_name).await? {
         println!("found '{}' table, deleting...", table_name);
-        drop_table(&pool, table_name).await?;
+        drop_table(pool, table_name).await?;
     } else {
         println!("'{}' table not found, creating...", table_name);
-        create_schema(&pool, table_name).await?;
+        create_schema(pool, table_name).await?;
 
         let days:Vec<Day> = sqlx::query_as!(Day, "
 SELECT date, name, is_off FROM holiday WHERE date LIKE $1
-", "2022-10%").fetch_all(&pool).await?;
+", "2022-10%").fetch_all(pool).await?;
 
         for day in days {
             println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off);
