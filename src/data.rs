@@ -1,10 +1,18 @@
 use serde::{Deserialize,Serialize};
 
 
-pub async fn test_reqwest_serde() -> Result<(), reqwest::Error> {
-    let res = reqwest::get("https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/2022.json").await?;
-    let data = res.json::<Root>().await?;
-    let days = data.days;
+fn make_data_url(prefix: &str, year: i32) -> String {
+    String::from(prefix) + &(format!("{}.json", year))
+}
+
+pub async fn test_reqwest_serde(prefix: &str) -> Result<(), reqwest::Error> {
+    let year = 2022;
+    let days = reqwest::get(make_data_url(prefix, year))
+        .await?
+        .json::<Root>()
+        .await?
+        .days;
+
     for day in days {
         println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off_day);
     }
