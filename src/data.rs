@@ -15,17 +15,6 @@ pub async fn get_holidays_of_year(url_prefix: &str, year: i32) -> Result<Vec<Day
     Ok(days)
 }
 
-pub async fn test_reqwest_serde(url_prefix: &str) -> Result<(), reqwest::Error> {
-    let year = 2020;
-    let days = get_holidays_of_year(url_prefix, year).await?;
-
-    for day in days {
-        println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off_day);
-    }
-
-    Ok(())
-}
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

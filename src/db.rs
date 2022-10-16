@@ -1,7 +1,7 @@
 use sqlx::postgres::PgPool;
 
 
-async fn check_table_exist(pool: &PgPool, table_name: &str) -> Result<bool, sqlx::Error> {
+pub async fn check_table_exist(pool: &PgPool, table_name: &str) -> Result<bool, sqlx::Error> {
     let res = sqlx::query!("
 SELECT EXISTS (
     SELECT FROM
@@ -15,14 +15,14 @@ SELECT EXISTS (
     Ok(res.exists.unwrap())
 }
 
-async fn drop_table(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
+pub async fn drop_table(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
     let sql = "DROP TABLE IF EXISTS ".to_owned() + table_name;
     sqlx::query(&sql).execute(pool).await?;
 
     Ok(())
 }
 
-async fn create_schema(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
+pub async fn create_schema(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
     let sql_create_table = format!("
 CREATE TABLE IF NOT EXISTS {0}
 (
@@ -39,38 +39,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS {0}_ux_date ON {0} (date)
 
     let mut tx = pool.begin().await?;
     sqlx::query(&sql_create_table)
-    .execute(insert_row&mut tx)
-    .await?;
+        .execute(&mut tx)
+        .await?;
     sqlx::query(&sql_create_index)
-    .execute(&mut tx)
-    .await?;
+        .execute(&mut tx)
+        .await?;
     tx.commit().await?;
 
     Ok(())
 }
 
-
-pub async fn test_sqlx(pool: &PgPool) -> Result<(), sqlx::Error> {
-    let table_name = "holiday";
-    if check_table_exist(&pool, table_name).await? {
-        println!("found '{}' table, deleting...", table_name);
-        drop_table(pool, table_name).await?;
-    } else {
-        println!("'{}' table not found, creating...", table_name);
-        create_schema(pool, table_name).await?;
-
-        let days:Vec<Day> = sqlx::query_as!(Day, "
-SELECT date, name, is_off FROM holiday WHERE date LIKE $1
-", "2022-10%").fetch_all(pool).await?;
-
-        for day in days {
-            println!("name: {} date: {} is_off_day: {}", day.name, day.date, day.is_off);
-        }
-    }
+pub async fn insert_row(pool: &PgPool, table_name: &str, day: Day) -> Result<(), sqlx::Error> {
+    let sql = format!("
+INSERT INTO {} (date, name, is_off)
+VALUES ($1, $2, $3)
+ON CONFLICT(date) DO UPDATE
+SET date=$1, name=$2, is_off=$3
+", table_name);
+    sqlx::query(&sql)
+        .bind(day.date)
+        .bind(day.name)
+        .bind(day.is_off)
+        .execute(pool)
+        .await?;
 
     Ok(())
 }
 
 
 #[derive(Default, Debug, Clone, PartialEq)]
-pub struct Day { date: String, name: String, is_off: bool }
+pub struct Day {
+    pub date: String,
+    pub name: String,
+    pub is_off: bool
+}
