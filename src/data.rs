@@ -1,11 +1,11 @@
 use serde::{Deserialize,Serialize};
 
 
-fn make_data_url(url_prefix: &str, year: i32) -> String {
+fn make_data_url(url_prefix: &str, year: u32) -> String {
     String::from(url_prefix) + &(format!("{}.json", year))
 }
 
-pub async fn get_holidays_of_year(url_prefix: &str, year: i32) -> Result<Vec<Day>, reqwest::Error> {
+pub async fn get_holidays_of_year(url_prefix: &str, year: u32) -> Result<Vec<Day>, reqwest::Error> {
     let days = reqwest::get(make_data_url(url_prefix, year))
         .await?
         .json::<Root>()

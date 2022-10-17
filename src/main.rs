@@ -8,7 +8,7 @@ use dotenv::dotenv;
 use std::env;
 
 
-async fn handle_data_of_year(url_prefix: &str, year: i32, pool: &PgPool, table_name: &str)
+async fn handle_data_of_year(url_prefix: &str, year: u32, pool: &PgPool, table_name: &str)
                              -> Result<(), Box<dyn std::error::Error>> {
     let days: Vec<data::Day> = data::get_holidays_of_year(&url_prefix, year).await?;
 
@@ -23,7 +23,6 @@ async fn handle_data_of_year(url_prefix: &str, year: i32, pool: &PgPool, table_n
 
     Ok(())
 }
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
