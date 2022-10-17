@@ -54,7 +54,7 @@ pub async fn insert_row(pool: &PgPool, table_name: &str, day: Day) -> Result<(),
 INSERT INTO {} (date, name, is_off)
 VALUES ($1, $2, $3)
 ON CONFLICT(date) DO UPDATE
-SET date=$1, name=$2, is_off=$3
+SET name=$2, is_off=$3
 ", table_name);
     sqlx::query(&sql)
         .bind(day.date)
