@@ -56,6 +56,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             args.push(n)
         }
     }
+
+    if args.len() == 1 && args[0] == 0 {
+        print!("dropping '{}' table...", table_name);
+        db::drop_schema(&pool, &table_name).await?;
+        println!("done. (re-run this tool to start over)");
+
+        return Ok(());
+    }
+
     let begin_year = if args.len() >= 1 { args[0] } else { 2007 };
     let end_year = (if args.len() >= 2 { args[1] } else { Utc::now().year() as u32 }) + 1;
 
