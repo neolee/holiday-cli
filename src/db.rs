@@ -15,7 +15,7 @@ SELECT EXISTS (
     Ok(res.exists.unwrap())
 }
 
-pub async fn drop_table(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
+pub async fn drop_schema(pool: &PgPool, table_name: &str) -> Result<(), sqlx::Error> {
     let sql = "DROP TABLE IF EXISTS ".to_owned() + table_name;
     sqlx::query(&sql).execute(pool).await?;
 
@@ -28,13 +28,13 @@ CREATE TABLE IF NOT EXISTS {0}
 (
     id integer NOT NULL GENERATED ALWAYS AS IDENTITY,
     date character(10) NOT NULL,
-    name character(40) NOT NULL,
+    name character varying(40) NOT NULL,
     is_off boolean NOT NULL,
     CONSTRAINT {0}_pkey PRIMARY KEY (id)
 )
 ", table_name);
     let sql_create_index = format!("
-CREATE UNIQUE INDEX IF NOT EXISTS {0}_ux_date ON {0} (date)
+CREATE UNIQUE INDEX IF NOT EXISTS {0}_unique_date ON {0} (date)
 ", table_name);
 
     let mut tx = pool.begin().await?;
