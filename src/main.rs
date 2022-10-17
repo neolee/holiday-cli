@@ -9,11 +9,11 @@ use std::env;
 use chrono::{Datelike, Utc};
 
 
-async fn handle_data_of_year(url_prefix: &str, year: u32, pool: &PgPool, table_name: &str)
+async fn load_data_of_year(url_prefix: &str, year: u32, pool: &PgPool, table_name: &str)
                              -> Result<(), Box<dyn std::error::Error>> {
     let days: Vec<data::Day> = data::get_holidays_of_year(&url_prefix, year).await?;
 
-    print!("holidays in {}", year);
+    print!("[{}]", year);
     for day in days {
         let data = db::Day {
             date: day.date,
@@ -23,7 +23,7 @@ async fn handle_data_of_year(url_prefix: &str, year: u32, pool: &PgPool, table_n
         db::insert_row(pool, table_name, data).await?;
         print!(".");
     }
-    println!("done.");
+    println!();
 
     Ok(())
 }
@@ -68,9 +68,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let begin_year = if args.len() >= 1 { args[0] } else { 2007 };
     let end_year = (if args.len() >= 2 { args[1] } else { Utc::now().year() as u32 }) + 1;
 
-    println!("loading data from {} to {}...", begin_year, end_year);
+    println!("loading holiday data from year {} to {}", begin_year, end_year);
     for year in begin_year..=end_year  {
-        handle_data_of_year(&url_prefix, year, &pool, &table_name).await?;
+        load_data_of_year(&url_prefix, year, &pool, &table_name).await?;
     }
     println!("done.");
 
