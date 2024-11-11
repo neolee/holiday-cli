@@ -1,3 +1,4 @@
+use std::ops::DerefMut;
 use sqlx::postgres::PgPool;
 
 
@@ -39,10 +40,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS {0}_unique_date ON {0} (date)
 
     let mut tx = pool.begin().await?;
     sqlx::query(&sql_create_table)
-        .execute(&mut tx)
+        .execute(tx.deref_mut())
         .await?;
     sqlx::query(&sql_create_index)
-        .execute(&mut tx)
+        .execute(tx.deref_mut())
         .await?;
     tx.commit().await?;
 
