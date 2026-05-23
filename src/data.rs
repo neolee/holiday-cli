@@ -1,5 +1,4 @@
-use serde::{Deserialize,Serialize};
-
+use serde::{Deserialize, Serialize};
 
 fn make_data_url(url_prefix: &str, year: u32) -> String {
     String::from(url_prefix) + &(format!("{}.json", year))
@@ -14,7 +13,6 @@ pub async fn get_holidays_of_year(url_prefix: &str, year: u32) -> Result<Vec<Day
 
     Ok(days)
 }
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
